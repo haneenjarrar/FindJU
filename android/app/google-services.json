@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "22991003242",
+    "project_id": "findju-165e0",
+    "storage_bucket": "findju-165e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:22991003242:android:7aca4b8b493f1281d3f413",
+        "android_client_info": {
+          "package_name": "com.example.adv_soft_app1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwdSsMXtUDZJ2ANb_xF3LzQzu8gdYr7Gk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
