@@ -72,11 +72,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     setState(() => _creatingChat = true);
     try {
       final uid = currentUser.uid;
-      final displayName = (currentUser.displayName?.trim().isNotEmpty == true
-              ? currentUser.displayName!
-              : null) ??
-          currentUser.email?.split('@').first ??
-          'User';
+      String displayName = currentUser.email?.split('@').first ?? 'User';
+      try {
+        final myDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        final md = myDoc.data();
+        final fn = (md?['fullName'] as String?)?.trim();
+        if (fn != null && fn.isNotEmpty) displayName = fn;
+      } catch (_) {}
 
       final ids = [uid, posterUid]..sort();
       final chatId = '${ids[0]}_${ids[1]}';
@@ -182,6 +187,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           }
 
           final posterUid = data['uid'] ?? '';
+          final myUid = FirebaseAuth.instance.currentUser?.uid;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -448,7 +454,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
 
                   // ── Message + Flag buttons ────────────────────────────
-                  if (posterUid != FirebaseAuth.instance.currentUser?.uid)
+                  if (myUid != null && posterUid != myUid &&
+                      data['status'] != 'reunited')
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: Row(children: [
@@ -481,16 +488,36 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      OutlinedButton(
-                        onPressed: () => _flagItem(docId),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.all(13),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        child: const Icon(Icons.flag_outlined,
-                            color: Colors.black54, size: 20),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('reports')
+                            .where('itemId', isEqualTo: docId)
+                            .where('reportedBy', isEqualTo: myUid)
+                            .snapshots(),
+                        builder: (ctx, repSnap) {
+                          final reported =
+                              (repSnap.data?.docs.length ?? 0) > 0;
+                          return OutlinedButton(
+                            onPressed: reported ? null : () => _flagItem(docId),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.all(13),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              side: BorderSide(
+                                color: reported
+                                    ? Colors.red.shade300
+                                    : Colors.grey.shade300,
+                              ),
+                              backgroundColor:
+                                  reported ? Colors.red.shade50 : null,
+                            ),
+                            child: Icon(
+                              reported ? Icons.flag : Icons.flag_outlined,
+                              color: reported ? Colors.red : Colors.black54,
+                              size: 20,
+                            ),
+                          );
+                        },
                       ),
                     ]),
                   ),
@@ -523,7 +550,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         ),
                       ),
                     )
-                  else if (posterUid == FirebaseAuth.instance.currentUser?.uid)
+                  else if (posterUid == myUid)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                       child: SizedBox(

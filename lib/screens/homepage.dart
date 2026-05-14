@@ -630,11 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         var docs = snap.data?.docs ?? [];
 
-        // Always hide reunited items from the public feed
-        docs = docs.where((d) {
-          final data = d.data() as Map<String, dynamic>;
-          return data['status'] != 'reunited';
-        }).toList();
+        // Keep reunited items in the feed but mark them as closed
 
         // Type filter (client-side — avoids composite index requirement)
         if (_typeFilter != 'All') {
@@ -1163,6 +1159,7 @@ class _ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLost = (data['type'] ?? '') == 'Lost';
+    final isReunited = data['status'] == 'reunited';
     final imageUrl = data['imageUrl'] as String? ?? '';
     final ts = data['createdAt'];
     String timeAgo = '';
@@ -1180,7 +1177,9 @@ class _ItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: () =>
           Navigator.pushNamed(context, '/item-detail', arguments: docId),
-      child: Container(
+      child: Opacity(
+        opacity: isReunited ? 0.72 : 1.0,
+        child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1251,8 +1250,29 @@ class _ItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // Reunited badge — top right
+                  if (isReunited)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF7B3FA0),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Reunited ✓',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
                   // Time — bottom right over gradient
-                  if (timeAgo.isNotEmpty)
+                  if (timeAgo.isNotEmpty && !isReunited)
                     Positioned(
                       bottom: 8,
                       right: 10,
@@ -1310,6 +1330,7 @@ class _ItemCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
