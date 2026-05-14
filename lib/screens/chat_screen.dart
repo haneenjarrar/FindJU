@@ -15,6 +15,18 @@ class _ChatScreenState extends State<ChatScreen> {
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   bool _sending = false;
+  String? _activeChatId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final chatId = ModalRoute.of(context)?.settings.arguments as String?;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (chatId != null && uid != null && chatId != _activeChatId) {
+      _activeChatId = chatId;
+      _markRead(chatId, uid);
+    }
+  }
 
   @override
   void dispose() {
@@ -169,8 +181,6 @@ class _ChatScreenState extends State<ChatScreen> {
     final displayName = currentUser.displayName ??
         currentUser.email?.split('@').first ??
         'User';
-
-    _markRead(chatId, uid);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'edit_item_form.dart';
 
 class MyItemsScreen extends StatelessWidget {
   const MyItemsScreen({super.key});
@@ -136,8 +137,14 @@ class MyItemsScreen extends StatelessWidget {
                     return _MyItemCard(
                       data: data,
                       docId: docId,
-                      onDelete: () =>
-                          _deleteItem(context, docId),
+                      onDelete: () => _deleteItem(context, docId),
+                      onEdit: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) =>
+                            EditItemSheet(docId: docId, data: data),
+                      ),
                     );
                   },
                 );
@@ -151,11 +158,15 @@ class _MyItemCard extends StatelessWidget {
   final Map<String, dynamic> data;
   final String docId;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
+
+  static const _kGreen = Color.fromARGB(255, 41, 103, 43);
 
   const _MyItemCard({
     required this.data,
     required this.docId,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -346,6 +357,20 @@ class _MyItemCard extends StatelessWidget {
                         style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ),
                 ),
+                if (status != 'reunited') ...[
+                  Container(
+                      width: 1, height: 36, color: Colors.grey.shade100),
+                  Expanded(
+                    child: TextButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined,
+                          size: 16, color: _kGreen),
+                      label: const Text('Edit',
+                          style:
+                              TextStyle(color: _kGreen, fontSize: 13)),
+                    ),
+                  ),
+                ],
                 Container(
                     width: 1, height: 36, color: Colors.grey.shade100),
                 Expanded(

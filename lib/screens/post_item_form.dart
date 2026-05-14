@@ -369,6 +369,34 @@ class _PostItemFormState extends State<PostItemForm> {
         'createdAt':   FieldValue.serverTimestamp(),
       });
 
+      // Notify users subscribed to this category
+      try {
+        final subscribers = await FirebaseFirestore.instance
+            .collection('users')
+            .where('notifCategories', arrayContains: _category)
+            .get();
+        if (subscribers.docs.isNotEmpty) {
+          final notifBatch = FirebaseFirestore.instance.batch();
+          for (final userDoc in subscribers.docs) {
+            if (userDoc.id == uid) continue;
+            final ref = FirebaseFirestore.instance
+                .collection('notifications')
+                .doc();
+            notifBatch.set(ref, {
+              'uid': userDoc.id,
+              'message':
+                  'New ${widget.type.toLowerCase()} item in $_category: "${_nameCtrl.text.trim()}"',
+              'itemId': docRef.id,
+              'category': _category,
+              'type': 'new_item',
+              'read': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
+          await notifBatch.commit();
+        }
+      } catch (_) {}
+
       if (mounted) {
         _showSnack('Item posted successfully!', success: true);
         Navigator.pop(context);

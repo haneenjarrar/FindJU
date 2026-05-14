@@ -94,9 +94,13 @@ class MessagesScreen extends StatelessWidget {
 
                 final docs = List.of(snap.data?.docs ?? [])
                   ..sort((a, b) {
-                    final aTs = (a.data() as Map<String, dynamic>)['lastMessageTime'];
-                    final bTs = (b.data() as Map<String, dynamic>)['lastMessageTime'];
-                    if (aTs is! Timestamp || bTs is! Timestamp) return 0;
+                    final aData = a.data() as Map<String, dynamic>;
+                    final bData = b.data() as Map<String, dynamic>;
+                    final aTs = aData['lastMessageTime'] ?? aData['createdAt'];
+                    final bTs = bData['lastMessageTime'] ?? bData['createdAt'];
+                    if (aTs is! Timestamp && bTs is! Timestamp) return 0;
+                    if (aTs is! Timestamp) return 1;
+                    if (bTs is! Timestamp) return -1;
                     return bTs.compareTo(aTs);
                   });
 
